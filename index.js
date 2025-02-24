@@ -1,7 +1,11 @@
 const express = require("express");
+const morgan = require("morgan");
+
 const app = express();
 
 app.use(express.json());
+
+app.use(morgan("tiny")); //formato compacto en la consola
 
 let persons = [
   {
@@ -27,49 +31,12 @@ let persons = [
 ];
 
 app.get("/", (request, response) => {
-  response.send("<h1>Phonebook Backend</h1>");
+  response.send("<h1>Phonebookb Backend</h1>");
 });
 
 app.get("/api/persons", (request, response) => {
   response.json(persons);
 });
-
-app.get("/info", (request, response) => {
-  const numPersons = persons.length;
-  const requestTime = new Date();
-
-  response.send(`
-    <p>Phonebook has info for ${numPersons} people</p>
-    <p>${requestTime}</p>
-  `);
-});
-
-app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((p) => p.id === id);
-
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).json({ error: "Person not found" });
-  }
-});
-
-app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const initialLength = persons.length;
-  persons = persons.filter((p) => p.id !== id);
-
-  if (persons.length < initialLength) {
-    response.status(204).end();
-  } else {
-    response.status(404).json({ error: "Person not found" });
-  }
-});
-
-const generateId = () => {
-  return Math.floor(Math.random() * 1000000);
-};
 
 app.post("/api/persons", (request, response) => {
   const { name, number } = request.body;
@@ -83,7 +50,7 @@ app.post("/api/persons", (request, response) => {
   }
 
   const newPerson = {
-    id: generateId(),
+    id: Math.floor(Math.random() * 1000000),
     name,
     number,
   };
