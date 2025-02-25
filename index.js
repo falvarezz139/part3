@@ -5,7 +5,13 @@ const app = express();
 
 app.use(express.json());
 
-app.use(morgan("tiny")); //formato compacto en la consola
+morgan.token("body", (req) => {
+  return req.method === "POST" ? JSON.stringify(req.body) : ""; //registrar token
+});
+
+app.use(
+  morgan(":method :url :status :res[content-length] - :response-time ms :body") //formato solicitudes
+);
 
 let persons = [
   {
@@ -30,15 +36,8 @@ let persons = [
   },
 ];
 
-app.get("/", (request, response) => {
-  response.send("<h1>Phonebookb Backend</h1>");
-});
-
-app.get("/api/persons", (request, response) => {
-  response.json(persons);
-});
-
 app.post("/api/persons", (request, response) => {
+  //agregar persona nueva
   const { name, number } = request.body;
 
   if (!name || !number) {
@@ -46,10 +45,11 @@ app.post("/api/persons", (request, response) => {
   }
 
   if (persons.some((p) => p.name === name)) {
-    return response.status(400).json({ error: "Name must be unique" });
+    return response.status(400).json({ error: "Name must be unique" }); //se añade objeto
   }
 
   const newPerson = {
+    //creación nuevo objeto
     id: Math.floor(Math.random() * 1000000),
     name,
     number,
@@ -59,7 +59,7 @@ app.post("/api/persons", (request, response) => {
   response.json(newPerson);
 });
 
-const PORT = 3001;
+const PORT = 3001; //escucha en el puerto 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
