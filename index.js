@@ -40,6 +40,11 @@ let persons = [
   },
 ];
 
+app.get("/api/persons", (request, response) => {
+  //trae los datos
+  response.json(persons);
+});
+
 app.post("/api/persons", (request, response) => {
   //agrega persona nueva
   const { name, number } = request.body;
