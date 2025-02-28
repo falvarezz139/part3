@@ -17,7 +17,7 @@ mongoose
 const app = express();
 
 morgan.token("body", (req) =>
-  req.method === "POST" ? JSON.stringify(req.body) : ""
+  req.method === "POST" || req.method === "PUT" ? JSON.stringify(req.body) : ""
 );
 app.use(express.json());
 app.use(
@@ -26,29 +26,59 @@ app.use(
 app.use(cors());
 app.use(express.static("dist"));
 
-// Obtener todas las personas
 app.get("/api/persons", (req, res) => {
   Person.find({}).then((persons) => res.json(persons));
 });
 
-// Obtener una persona por ID
+// traer por ID
 app.get("/api/persons/:id", (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => (person ? res.json(person) : res.status(404).end()))
     .catch((error) => next(error));
 });
 
-// Agregar una persona
-app.post("/api/persons", (req, res) => {
+// Agregar una nueva persona o actualizar el número si el nombre ya existe
+app.post("/api/persons", (req, res, next) => {
   const { name, number } = req.body;
   if (!name || !number)
     return res.status(400).json({ error: "Name and number are required" });
 
-  const person = new Person({ name, number });
-  person.save().then((savedPerson) => res.json(savedPerson));
+  Person.findOne({ name }).then((existingPerson) => {
+    if (existingPerson) {
+      // Si ya existe se cambia el número
+      Person.findByIdAndUpdate(
+        existingPerson._id,
+        { number },
+        { new: true, runValidators: true }
+      )
+        .then((updatedPerson) => res.json(updatedPerson))
+        .catch((error) => next(error));
+    } else {
+      new Person({ name, number })
+        .save()
+        .then((savedPerson) => res.json(savedPerson))
+        .catch((error) => next(error));
+    }
+  });
 });
 
-// Eliminar una persona por ID
+// Actualizar el número por ID
+app.put("/api/persons/:id", (req, res, next) => {
+  const { number } = req.body;
+  Person.findByIdAndUpdate(
+    req.params.id,
+    { number },
+    { new: true, runValidators: true }
+  )
+    .then((updatedPerson) => {
+      updatedPerson
+        ? res.json(updatedPerson)
+        : res.status(404).json({ error: "Person not found" });
+    })
+    .catch((error) => next(error));
+});
+
+// Eliminar por ID
 app.delete("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndDelete(req.params.id)
     .then((deletedPerson) => {
@@ -59,16 +89,18 @@ app.delete("/api/persons/:id", (req, res, next) => {
     .catch((error) => next(error));
 });
 
-// Middleware para manejar endpoints desconocidos
+// Utilizar endpoints desconocidos
 app.use((req, res) => res.status(404).json({ error: "unknown endpoint" }));
 
-// Middleware de manejo de errores
+// manejo de errores
 app.use((error, req, res, next) => {
   console.error(error.message);
   if (error.name === "CastError")
     return res.status(400).json({ error: "malformatted id" });
+  if (error.name === "ValidationError")
+    return res.status(400).json({ error: error.message });
   next(error);
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
