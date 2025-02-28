@@ -9,25 +9,16 @@ const url = process.env.MONGODB_URI;
 console.log("connecting to", url);
 
 mongoose.set("strictQuery", false);
-
 mongoose
   .connect(url)
-  .then(() => {
-    console.log("connected to MongoDB");
-  })
-  .catch((error) => {
-    console.log("error connecting to MongoDB:", error.message);
-  });
+  .then(() => console.log("connected to MongoDB"))
+  .catch((error) => console.log("error connecting to MongoDB:", error.message));
 
 const app = express();
 
-morgan.token("body", (req) => {
-  if (req.method === "POST" && req.body) {
-    return JSON.stringify(req.body);
-  }
-  return "";
-});
-
+morgan.token("body", (req) =>
+  req.method === "POST" ? JSON.stringify(req.body) : ""
+);
 app.use(express.json());
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
@@ -35,41 +26,49 @@ app.use(
 app.use(cors());
 app.use(express.static("dist"));
 
-app.get("/api/persons", (request, response) => {
-  Person.find({}).then((persons) => {
-    response.json(persons);
-  });
+// Obtener todas las personas
+app.get("/api/persons", (req, res) => {
+  Person.find({}).then((persons) => res.json(persons));
 });
 
-app.post("/api/persons", (request, response) => {
-  const body = request.body;
-
-  if (!body.name || !body.number) {
-    return response.status(400).json({ error: "Name and number are required" });
-  }
-
-  const person = new Person({
-    name: body.name,
-    number: body.number,
-  });
-
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+// Obtener una persona por ID
+app.get("/api/persons/:id", (req, res, next) => {
+  Person.findById(req.params.id)
+    .then((person) => (person ? res.json(person) : res.status(404).end()))
+    .catch((error) => next(error));
 });
 
-app.delete("/api/persons/:id", async (req, res) => {
-  const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(400).json({ error: "Invalid ID format" });
+// Agregar una persona
+app.post("/api/persons", (req, res) => {
+  const { name, number } = req.body;
+  if (!name || !number)
+    return res.status(400).json({ error: "Name and number are required" });
 
-  const deletedPerson = await Person.findByIdAndDelete(id);
-  deletedPerson
-    ? res.status(204).end()
-    : res.status(404).json({ error: "Person not found" });
+  const person = new Person({ name, number });
+  person.save().then((savedPerson) => res.json(savedPerson));
+});
+
+// Eliminar una persona por ID
+app.delete("/api/persons/:id", (req, res, next) => {
+  Person.findByIdAndDelete(req.params.id)
+    .then((deletedPerson) => {
+      deletedPerson
+        ? res.status(204).end()
+        : res.status(404).json({ error: "Person not found" });
+    })
+    .catch((error) => next(error));
+});
+
+// Middleware para manejar endpoints desconocidos
+app.use((req, res) => res.status(404).json({ error: "unknown endpoint" }));
+
+// Middleware de manejo de errores
+app.use((error, req, res, next) => {
+  console.error(error.message);
+  if (error.name === "CastError")
+    return res.status(400).json({ error: "malformatted id" });
+  next(error);
 });
 
 const PORT = process.env.PORT || 3002;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
