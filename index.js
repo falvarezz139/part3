@@ -57,3 +57,19 @@ app.post("/api/persons", (request, response) => {
     response.json(savedPerson);
   });
 });
+
+app.delete("/api/persons/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(400).json({ error: "Invalid ID format" });
+
+  const deletedPerson = await Person.findByIdAndDelete(id);
+  deletedPerson
+    ? res.status(204).end()
+    : res.status(404).json({ error: "Person not found" });
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
