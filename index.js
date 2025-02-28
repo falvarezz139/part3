@@ -43,7 +43,10 @@ app.get("/api/persons", (request, response) => {
         response.status(404).end();
       }
     })
-    .catch((error) => next(error));
+    .catch((error) => {
+      console.log(error);
+      response.status(500).end();
+    });
 });
 
 app.post("/api/persons", (request, response) => {
@@ -63,33 +66,16 @@ app.post("/api/persons", (request, response) => {
   });
 });
 
-app.delete("/api/persons/:id", (request, response, next) => {
-  Person.findByIdAndDelete(request.params.id)
-    .then(() => {
-      response.status(204).end();
-    })
-    .catch((error) => next(error));
+app.delete("/api/persons/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(400).json({ error: "Invalid ID format" });
+
+  const deletedPerson = await Person.findByIdAndDelete(id);
+  deletedPerson
+    ? res.status(204).end()
+    : res.status(404).json({ error: "Person not found" });
 });
-
-const unknownEndpoint = (request, response) => {
-  response.status(404).send({ error: "unknown endpoint" });
-};
-
-app.use(unknownEndpoint);
-
-const errorHandler = (error, request, response, next) => {
-  console.error(error.message);
-
-  if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
-  } else if (error.name === "ValidationError") {
-    return response.status(400).json({ error: error.message });
-  }
-
-  next(error);
-};
-
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
