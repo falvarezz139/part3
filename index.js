@@ -26,37 +26,34 @@ app.use(
 app.use(cors());
 app.use(express.static("dist"));
 
-/* GET - Obtener todas las personas (sin cambios) */
+//Obtener todas las personas
 app.get("/api/persons", (req, res) => {
   Person.find({}).then((persons) => res.json(persons));
 });
 
-/* GET - Obtener persona por ID (sin cambios) */
+// Obtener persona por ID
 app.get("/api/persons/:id", (req, res, next) => {
   Person.findById(req.params.id)
     .then((person) => (person ? res.json(person) : res.status(404).end()))
     .catch((error) => next(error));
 });
 
-/* POST - Agregar una nueva persona o actualizar el número si el nombre ya existe */
-/* Modificado: Se añadió validación de 'name' y 'number', y manejo de errores de validación */
 app.post("/api/persons", (req, res, next) => {
   const { name, number } = req.body;
 
-  // Validación: Asegurarse de que 'name' y 'number' estén presentes
   if (!name || !number)
     return res.status(400).json({ error: "Name and number are required" });
 
   Person.findOne({ name }).then((existingPerson) => {
     if (existingPerson) {
-      // Si ya existe la persona, actualiza el número
+      // Si ya existe, actualiza el número
       Person.findByIdAndUpdate(
         existingPerson._id,
         { number },
-        { new: true, runValidators: true } // Se activan los validadores
+        { new: true, runValidators: true }
       )
         .then((updatedPerson) => res.json(updatedPerson))
-        .catch((error) => next(error)); // Manejo de errores
+        .catch((error) => next(error));
     } else {
       // Si no existe la persona, la creamos
       const person = new Person({
@@ -67,13 +64,11 @@ app.post("/api/persons", (req, res, next) => {
       person
         .save()
         .then((savedPerson) => res.json(savedPerson))
-        .catch((error) => next(error)); // Manejo de errores
+        .catch((error) => next(error));
     }
   });
 });
 
-/* PUT - Actualizar el número por ID */
-/* Modificado: Se añadió validación de 'number', y se activaron los validadores */
 app.put("/api/persons/:id", (req, res, next) => {
   const { number } = req.body;
 
@@ -86,17 +81,16 @@ app.put("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndUpdate(
     req.params.id,
     { number },
-    { new: true, runValidators: true } // Se activan los validadores
+    { new: true, runValidators: true }
   )
     .then((updatedPerson) => {
       updatedPerson
         ? res.json(updatedPerson)
         : res.status(404).json({ error: "Person not found" });
     })
-    .catch((error) => next(error)); // Manejo de errores
+    .catch((error) => next(error));
 });
 
-/* DELETE - Eliminar por ID (sin cambios) */
 app.delete("/api/persons/:id", (req, res, next) => {
   Person.findByIdAndDelete(req.params.id)
     .then((deletedPerson) => {
@@ -104,13 +98,13 @@ app.delete("/api/persons/:id", (req, res, next) => {
         ? res.status(204).end()
         : res.status(404).json({ error: "Person not found" });
     })
-    .catch((error) => next(error)); // Manejo de errores
+    .catch((error) => next(error));
 });
 
-/* Manejo de endpoints desconocidos (sin cambios) */
+// Manejo de endpoints desconocidos
 app.use((req, res) => res.status(404).json({ error: "unknown endpoint" }));
 
-/* Manejo de errores (modificado para capturar errores de validación y tipo de ID) */
+//capturar errores de validacion
 app.use((error, req, res, next) => {
   console.error(error.message);
 
