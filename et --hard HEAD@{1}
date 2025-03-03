@@ -1,0 +1,30 @@
+[33m832bc70[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m1a5f0ea[m HEAD@{1}: reset: moving to HEAD~1
+[33mc1a5aab[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{2}: pull --tags origin main: Fast-forward
+[33m1a5f0ea[m HEAD@{3}: reset: moving to HEAD~1
+[33mc1a5aab[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{4}: commit: prueba4
+[33m1a5f0ea[m HEAD@{5}: commit: ejercicio 3.18
+[33m832bc70[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{6}: commit: ahora con manejo de errores
+[33m67f58ec[m HEAD@{7}: commit: 5
+[33m631989a[m HEAD@{8}: commit: Ejercicio 13.14 con delete
+[33md49b5df[m HEAD@{9}: commit: prueba 3
+[33md2fca40[m HEAD@{10}: pull --tags origin main: Fast-forward
+[33m62dcfdd[m HEAD@{11}: reset: moving to HEAD~2
+[33md2fca40[m HEAD@{12}: commit: prueba 2
+[33m55f5823[m HEAD@{13}: commit: prueba manejo de errores
+[33m62dcfdd[m HEAD@{14}: commit (amend): Ejercicio 3.14
+[33ma798497[m HEAD@{15}: commit: funciona correctamente?
+[33m8b09235[m HEAD@{16}: commit: Comit prueba
+[33m5cd433e[m HEAD@{17}: commit: antes ejerciucio 3.13
+[33m7f9774b[m HEAD@{18}: commit: ejercicio 3.12
+[33m0eb804d[m HEAD@{19}: commit: guardar datos en base de datos mongodb
+[33mb5dfcb3[m HEAD@{20}: commit: mongo
+[33mdd688af[m HEAD@{21}: commit: get implementado
+[33mb1a388c[m HEAD@{22}: commit: Arreglo
+[33m6f01b3e[m HEAD@{23}: commit: Ultimo comit con nueva url
+[33m2a8161b[m HEAD@{24}: commit: otro
+[33m72273b2[m HEAD@{25}: commit: actualizado
+[33m2823546[m HEAD@{26}: commit: ejercicio 3.7 comentado
+[33m01a1798[m HEAD@{27}: commit: ejercicio 3.7
+[33mf780cca[m HEAD@{28}: commit: ejercicios 3.1 a 3.6
+[33m0f9a39a[m HEAD@{29}: commit (initial): notes part 3.1
