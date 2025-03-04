@@ -18,34 +18,34 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB Atlas");
 
-    const personSchema = new mongoose.Schema({
+    const blogSchema = new mongoose.Schema({
       name: String,
       number: String,
     });
 
-    const Person = mongoose.model("Person", personSchema);
+    const Person = mongoose.model("Person", blogSchema);
 
     if (name && number) {
-      const person = new Person({
+      const blog = new Person({
         name,
         number,
       });
 
-      person
+      blog
         .save()
         .then(() => {
           console.log(`added ${name} number ${number} to phonebook`);
           mongoose.connection.close();
         })
         .catch((err) => {
-          console.error("Error saving person:", err.message);
+          console.error("Error saving blog:", err.message);
           mongoose.connection.close();
         });
     } else {
       Person.find({}).then((result) => {
         console.log("phonebook:");
-        result.forEach((person) => {
-          console.log(`${person.name} ${person.number}`);
+        result.forEach((blog) => {
+          console.log(`${blog.name} ${blog.number}`);
         });
         mongoose.connection.close();
       });
