@@ -1,4 +1,3 @@
-// tests/list_helper_test.js
 const assert = require("assert");
 const listHelper = require("../utils/list_helper");
 
@@ -13,30 +12,84 @@ const listWithOneBlog = [
   },
 ];
 
-// Test para la función totalLikes
-const result1 = listHelper.totalLikes(listWithOneBlog);
-assert.strictEqual(
+const listWithMultipleBlogs = [
+  {
+    _id: "1",
+    title: "Blog 1",
+    author: "Author 1",
+    url: "http://example.com",
+    likes: 3,
+  },
+  {
+    _id: "2",
+    title: "Blog 2",
+    author: "Author 2",
+    url: "http://example.com",
+    likes: 4,
+  },
+  {
+    _id: "3",
+    title: "Blog 3",
+    author: "Author 3",
+    url: "http://example.com",
+    likes: 5,
+  },
+];
+
+const listWithMultipleBlogsWithSameLikes = [
+  {
+    _id: "1",
+    title: "Blog 1",
+    author: "Author 1",
+    url: "http://example.com",
+    likes: 5,
+  },
+  {
+    _id: "2",
+    title: "Blog 2",
+    author: "Author 2",
+    url: "http://example.com",
+    likes: 5,
+  },
+  {
+    _id: "3",
+    title: "Blog 3",
+    author: "Author 3",
+    url: "http://example.com",
+    likes: 5,
+  },
+];
+
+const result1 = listHelper.favoriteBlog(listWithOneBlog);
+assert.deepStrictEqual(
   result1,
-  5,
-  "Total likes should be 5 when there is only one blog"
+  listWithOneBlog[0],
+  "Debe devolver el único blog en la lista"
 );
 
-const result2 = listHelper.totalLikes([
-  { likes: 3 },
-  { likes: 4 },
-  { likes: 5 },
-]);
-assert.strictEqual(
+const result2 = listHelper.favoriteBlog(listWithMultipleBlogs);
+assert.deepStrictEqual(
   result2,
-  12,
-  "Total likes should be 12 when there are multiple blogs"
+  listWithMultipleBlogs[2],
+  "Debe devolver el blog con más likes"
 );
 
-const result3 = listHelper.totalLikes([]);
+//Cuando la lista tiene varios blogs con el mismo número de likes debe devolver alguno
+const result3 = listHelper.favoriteBlog(listWithMultipleBlogsWithSameLikes);
+const validBlogs = listWithMultipleBlogsWithSameLikes.filter(
+  (blog) => blog.likes === 5
+);
+assert.ok(
+  validBlogs.includes(result3),
+  "Debe devolver uno de los blogs con 5 likes"
+);
+
+//Cuando la lista está vacía devuelve null
+const result4 = listHelper.favoriteBlog([]);
 assert.strictEqual(
-  result3,
-  0,
-  "Total likes should be 0 when the list is empty"
+  result4,
+  null,
+  "Debe devolver null cuando la lista está vacía"
 );
 
-console.log("All tests passed!");
+console.log("Todas las pruebas pasaron!");
