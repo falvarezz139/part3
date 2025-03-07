@@ -67,14 +67,13 @@ assert.deepStrictEqual(
   "Debe devolver el único blog en la lista"
 );
 
-const result2 = listHelper.favoriteBlog(listWithMultipleBlogs);
+const result2 = listHelper.favoriteBlogs(listWithMultipleBlogs);
 assert.deepStrictEqual(
   result2,
   listWithMultipleBlogs[2],
   "Debe devolver el blog con más likes"
 );
 
-//Cuando la lista tiene blogs con el mismo número de likes debe devolver alguno
 const result3 = listHelper.favoriteBlog(listWithMultipleBlogsWithSameLikes);
 const validBlogs = listWithMultipleBlogsWithSameLikes.filter(
   (blog) => blog.likes === 5
@@ -84,7 +83,6 @@ assert.ok(
   "Debe devolver uno de los blogs con 5 likes"
 );
 
-//Cuando la lista está vacía devuelve null
 const result4 = listHelper.favoriteBlog([]);
 assert.strictEqual(
   result4,
