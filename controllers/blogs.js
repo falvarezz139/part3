@@ -23,14 +23,16 @@ blogsRouter.post("/", (request, response, next) => {
   const body = request.body;
 
   const blog = new Blog({
-    content: body.content,
-    important: body.important || false,
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    likes: body.likes || 0,
   });
 
   blog
     .save()
-    .then((savedBlog) => {
-      response.json(savedBlog);
+    .then((result) => {
+      response.status(201).json(result);
     })
     .catch((error) => next(error));
 });
@@ -47,8 +49,10 @@ blogsRouter.put("/:id", (request, response, next) => {
   const body = request.body;
 
   const blog = {
-    content: body.content,
-    important: body.important,
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    likes: body.likes,
   };
 
   Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
