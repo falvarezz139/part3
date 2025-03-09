@@ -67,7 +67,8 @@ assert.deepStrictEqual(
   "Debe devolver el único blog en la lista"
 );
 
-const result2 = listHelper.favoriteBlogs(listWithMultipleBlogs);
+const result2 = listHelper.favoriteBlog(listWithMultipleBlogs);
+
 assert.deepStrictEqual(
   result2,
   listWithMultipleBlogs[2],

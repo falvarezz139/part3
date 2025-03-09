@@ -3,9 +3,7 @@ const favoriteBlog = (blogs) => {
     return null;
   }
 
-  return blogs.reduce((maxBlog, currentBlog) => {
-    return currentBlog.likes > maxBlog.likes ? currentBlog : maxBlog;
-  });
+  return blogs.reduce((prev, current) => (prev.likes > current.likes ? prev : current));
 };
 
 module.exports = {

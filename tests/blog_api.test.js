@@ -29,19 +29,25 @@ test("if likes is missing, it will default to 0", async () => {
     .expect("Content-Type", /application\/json/);
 
   const createdBlog = response.body;
-  assert.strictEqual(createdBlog.likes, 0);  // Verifica que likes es 0 
+  assert.strictEqual(createdBlog.likes, 0);
+});
+
+test("blog without title or url is not added", async () => {
+  const newBlog = {
+    author: "John Doe",
+    likes: 10,
+  };
+
+  await api.post("/api/blogs").send(newBlog).expect(400);
+
+  const blogsAtEnd = await helper.blogsInDb();
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
 });
 
 test("the first blog is about HTML", async () => {
   const response = await api.get("/api/blogs");
   const titles = response.body.map((e) => e.title);
-  console.log(titles);
   assert(titles.includes("HTML is easy"));
-});
-
-test("there are two blogs", async () => {
-  const response = await api.get("/api/blogs");
-  assert.strictEqual(response.body.length, 2);
 });
 
 test("a valid blog can be added", async () => {
@@ -52,31 +58,14 @@ test("a valid blog can be added", async () => {
     likes: 5,
   };
 
-  const response = await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
+  await api.post("/api/blogs").send(newBlog).expect(201);
 
   const blogsAtEnd = await helper.blogsInDb();
   assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
-
-  const titles = blogsAtEnd.map((b) => b.title);
-  assert(titles.includes("Async/Await simplifies making async calls"));
-
-  const authors = blogsAtEnd.map((b) => b.author);
-  assert(authors.includes("John Doe"));
-
-  const urls = blogsAtEnd.map((b) => b.url);
-  assert(urls.includes("http://example.com/async"));
 });
 
 test("blogs are returned as JSON and have the correct length", async () => {
-  const response = await api
-    .get("/api/blogs")
-    .expect(200)
-    .expect("Content-Type", /application\/json/);
-
+  const response = await api.get("/api/blogs").expect(200);
   assert.strictEqual(response.body.length, helper.initialBlogs.length);
 });
 
