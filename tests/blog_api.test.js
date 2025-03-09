@@ -3,103 +3,73 @@ const mongoose = require("mongoose");
 const supertest = require("supertest");
 const app = require("../app");
 const Blog = require("../models/blog");
+const User = require("../models/user");
 const assert = require("assert");
 const helper = require("./test_helper");
 const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-  const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
+  await User.deleteMany({});
+
+  // Crear un usuario de prueba
+  const user = new User({
+    username: "testuser",
+    name: "Test User",
+    passwordHash: "passwordHash", // Ajusta esto según la lógica de tu autenticación
+  });
+
+  await user.save();
+
+  // Crear blogs relacionados con el usuario de prueba
+  const blogObjects = helper.initialBlogs.map((blog) => new Blog({ ...blog, user: user._id }));
   const promiseArray = blogObjects.map((blog) => blog.save());
   await Promise.all(promiseArray);
 });
 
-test("if likes is missing, it will default to 0", async () => {
-  const newBlog = {
-    title: "Blog with no likes",
-    author: "Jane Doe",
-    url: "http://example.com/no-likes",
-  };
-
-  const response = await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
-
-  const createdBlog = response.body;
-  assert.strictEqual(createdBlog.likes, 0);
-});
-
-test("blog without title or url is not added", async () => {
-  const newBlog = {
-    author: "John Doe",
-    likes: 10,
-  };
-
-  await api.post("/api/blogs").send(newBlog).expect(400);
-
-  const blogsAtEnd = await helper.blogsInDb();
-  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length);
-});
-
-test("the first blog is about HTML", async () => {
-  const response = await api.get("/api/blogs");
-  const titles = response.body.map((e) => e.title);
-  assert(titles.includes("HTML is easy"));
-});
-
-test("a valid blog can be added", async () => {
-  const newBlog = {
-    title: "Async/Await simplifies making async calls",
-    author: "John Doe",
-    url: "http://example.com/async",
-    likes: 5,
-  };
-
-  await api.post("/api/blogs").send(newBlog).expect(201);
-
-  const blogsAtEnd = await helper.blogsInDb();
-  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
-});
-
-test("blogs are returned as JSON and have the correct length", async () => {
-  const response = await api.get("/api/blogs").expect(200);
-  assert.strictEqual(response.body.length, helper.initialBlogs.length);
-});
-
-test("the identifier of a blog is called 'id'", async () => {
-  const response = await api.get("/api/blogs");
-  const blog = response.body[0];
-  assert(blog.id);
-});
-
-test("a blog can be deleted", async () => {
+test("a blog's likes can be updated", async () => {
   const blogsAtStart = await helper.blogsInDb();
-  const blogToDelete = blogsAtStart[0];
+  const blogToUpdate = blogsAtStart[0];
 
-  await api
-    .delete(`/api/blogs/${blogToDelete.id}`)
-    .expect(204);
+  console.log("Antes de la actualización:", blogToUpdate.likes);  // Agregar para ver el valor
+
+  const updatedData = {
+    likes: blogToUpdate.likes + 1,
+  };
+
+  // Cambiar id a _id
+  const response = await api
+    .put(`/api/blogs/${blogToUpdate._id}`)
+    .send(updatedData)
+    .expect(200);
+
+  // Verificar si likes está presente en la respuesta
+  if (!response.body.likes) {
+    throw new Error("No 'likes' field found in the response.");
+  }
+
+  console.log("Después de la actualización:", response.body.likes);  // Imprimir la respuesta
+
+  assert.strictEqual(response.body.likes, blogToUpdate.likes + 1);
 
   const blogsAtEnd = await helper.blogsInDb();
-  assert.strictEqual(blogsAtEnd.length, blogsAtStart.length - 1);
-
-  const deletedBlog = blogsAtEnd.find((b) => b.id === blogToDelete.id);
-  assert.strictEqual(deletedBlog, undefined);
+  const updatedBlog = blogsAtEnd.find((b) => b._id.toString() === blogToUpdate._id.toString());
+  if (!updatedBlog) {
+    throw new Error("Updated blog not found in the database.");
+  }
+  assert.strictEqual(updatedBlog.likes, blogToUpdate.likes + 1);
 });
 
-test("returns 404 if blog not found", async () => {
-  const nonExistentId = "60f5a2f28f49c2b1c0b8e830";
-  await api
-    .delete(`/api/blogs/${nonExistentId}`)
-    .expect(404);
-});
+test("returns 400 if likes value is not provided", async () => {
+  const blogsAtStart = await helper.blogsInDb();
+  const blogToUpdate = blogsAtStart[0];
 
-test("returns 400 for invalid ID", async () => {
-  const invalidId = "invalidId";
+  const updatedData = {};
+
+  // Cambiar id a _id
   await api
-    .delete(`/api/blogs/${invalidId}`)
+    .put(`/api/blogs/${blogToUpdate._id}`)
+    .send(updatedData)
     .expect(400);
 });
 

@@ -1,4 +1,5 @@
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 const initialBlogs = [
   {
@@ -6,12 +7,14 @@ const initialBlogs = [
     author: "John Doe",
     url: "http://example.com",
     likes: 5,
+    userId: "user-id-1",  // Asegúrate de que el `userId` esté presente
   },
   {
     title: "JavaScript is powerful",
     author: "Jane Doe",
     url: "http://example.com/js",
     likes: 10,
+    userId: "user-id-2",  // Asegúrate de que el `userId` esté presente
   },
 ];
 
