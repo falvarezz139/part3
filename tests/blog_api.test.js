@@ -48,6 +48,15 @@ test("a valid blog can be added", async () => {
   assert(titles.includes("Async/Await simplifies making async calls"));
 });
 
+test("blogs are returned as JSON and have the correct length", async () => {
+  const response = await api
+    .get("/api/blogs")
+    .expect(200)
+    .expect("Content-Type", /application\/json/);
+
+  assert.strictEqual(response.body.length, helper.initialBlogs.length);
+});
+
 after(async () => {
   await mongoose.connection.close();
 });
