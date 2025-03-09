@@ -10,12 +10,11 @@ const blogSchema = new mongoose.Schema({
   likes: Number,
 });
 
-// se modifica de _id a id en la respuesta JSON
 blogSchema.set("toJSON", {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString(); // se renombra _id a id
-    delete returnedObject._id; // Eliminar _id
-    delete returnedObject.__v; // Eliminar __v 
+    returnedObject.id = returnedObject._id.toString();
+    delete returnedObject._id;
+    delete returnedObject.__v;
   }
 });
 
@@ -24,18 +23,31 @@ const Blog = mongoose.model("Blog", blogSchema);
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/blogs", (request, response) => {
-  Blog.find({}).then((blogs) => {
-    response.json(blogs); 
-  });
+app.get("/api/blogs", async (request, response) => {
+  try {
+    const blogs = await Blog.find({});
+    response.json(blogs);
+  } catch (error) {
+    response.status(500).json({ error: "Failed to fetch blogs" });
+  }
 });
 
-app.post("/api/blogs", (request, response) => {
-  const blog = new Blog(request.body);
+app.post("/api/blogs", async (request, response) => {
+  const body = request.body;
 
-  blog.save().then((result) => {
-    response.status(201).json(result); // Devuelve el blog
+  const blog = new Blog({
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    likes: body.likes || 0,
   });
+
+  try {
+    const savedBlog = await blog.save();
+    response.status(201).json(savedBlog);
+  } catch (error) {
+    response.status(400).json({ error: "Failed to save blog" });
+  }
 });
 
 const PORT = 3003;

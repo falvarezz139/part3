@@ -15,18 +15,10 @@ beforeEach(async () => {
   await Promise.all(promiseArray);
 });
 
-test("blogs have an id property", async () => {
-  const response = await api.get("/api/blogs");
-
-  // Comprobar que cada blog tenga la propiedad "id"
-  response.body.forEach((blog) => {
-    assert.ok(blog.id); //"id" está presente
-  });
-});
-
 test("the first blog is about HTML", async () => {
   const response = await api.get("/api/blogs");
   const titles = response.body.map((e) => e.title);
+  console.log(titles);
   assert(titles.includes("HTML is easy"));
 });
 
@@ -43,7 +35,7 @@ test("a valid blog can be added", async () => {
     likes: 5,
   };
 
-  await api
+  const response = await api
     .post("/api/blogs")
     .send(newBlog)
     .expect(201)
@@ -54,6 +46,27 @@ test("a valid blog can be added", async () => {
 
   const titles = blogsAtEnd.map((b) => b.title);
   assert(titles.includes("Async/Await simplifies making async calls"));
+
+  const authors = blogsAtEnd.map((b) => b.author);
+  assert(authors.includes("John Doe"));
+
+  const urls = blogsAtEnd.map((b) => b.url);
+  assert(urls.includes("http://example.com/async"));
+});
+
+test("blogs are returned as JSON and have the correct length", async () => {
+  const response = await api
+    .get("/api/blogs")
+    .expect(200)
+    .expect("Content-Type", /application\/json/);
+
+  assert.strictEqual(response.body.length, helper.initialBlogs.length);
+});
+
+test("the identifier of a blog is called 'id'", async () => {
+  const response = await api.get("/api/blogs");
+  const blog = response.body[0];
+  assert(blog.id);
 });
 
 after(async () => {
