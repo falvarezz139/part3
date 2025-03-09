@@ -15,6 +15,23 @@ beforeEach(async () => {
   await Promise.all(promiseArray);
 });
 
+test("if likes is missing, it will default to 0", async () => {
+  const newBlog = {
+    title: "Blog with no likes",
+    author: "Jane Doe",
+    url: "http://example.com/no-likes",
+  };
+
+  const response = await api
+    .post("/api/blogs")
+    .send(newBlog)
+    .expect(201)
+    .expect("Content-Type", /application\/json/);
+
+  const createdBlog = response.body;
+  assert.strictEqual(createdBlog.likes, 0);  // Verifica que likes es 0 
+});
+
 test("the first blog is about HTML", async () => {
   const response = await api.get("/api/blogs");
   const titles = response.body.map((e) => e.title);
