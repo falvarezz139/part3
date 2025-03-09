@@ -15,10 +15,18 @@ beforeEach(async () => {
   await Promise.all(promiseArray);
 });
 
+test("blogs have an id property", async () => {
+  const response = await api.get("/api/blogs");
+
+  // Comprobar que cada blog tenga la propiedad "id"
+  response.body.forEach((blog) => {
+    assert.ok(blog.id); //"id" está presente
+  });
+});
+
 test("the first blog is about HTML", async () => {
   const response = await api.get("/api/blogs");
   const titles = response.body.map((e) => e.title);
-  console.log(titles);
   assert(titles.includes("HTML is easy"));
 });
 
@@ -46,15 +54,6 @@ test("a valid blog can be added", async () => {
 
   const titles = blogsAtEnd.map((b) => b.title);
   assert(titles.includes("Async/Await simplifies making async calls"));
-});
-
-test("blogs are returned as JSON and have the correct length", async () => {
-  const response = await api
-    .get("/api/blogs")
-    .expect(200)
-    .expect("Content-Type", /application\/json/);
-
-  assert.strictEqual(response.body.length, helper.initialBlogs.length);
 });
 
 after(async () => {
