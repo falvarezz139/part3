@@ -9,7 +9,6 @@ const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-
   const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
   const promiseArray = blogObjects.map((blog) => blog.save());
   await Promise.all(promiseArray);
@@ -73,6 +72,35 @@ test("the identifier of a blog is called 'id'", async () => {
   const response = await api.get("/api/blogs");
   const blog = response.body[0];
   assert(blog.id);
+});
+
+test("a blog can be deleted", async () => {
+  const blogsAtStart = await helper.blogsInDb();
+  const blogToDelete = blogsAtStart[0];
+
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204);
+
+  const blogsAtEnd = await helper.blogsInDb();
+  assert.strictEqual(blogsAtEnd.length, blogsAtStart.length - 1);
+
+  const deletedBlog = blogsAtEnd.find((b) => b.id === blogToDelete.id);
+  assert.strictEqual(deletedBlog, undefined);
+});
+
+test("returns 404 if blog not found", async () => {
+  const nonExistentId = "60f5a2f28f49c2b1c0b8e830";
+  await api
+    .delete(`/api/blogs/${nonExistentId}`)
+    .expect(404);
+});
+
+test("returns 400 for invalid ID", async () => {
+  const invalidId = "invalidId";
+  await api
+    .delete(`/api/blogs/${invalidId}`)
+    .expect(400);
 });
 
 after(async () => {
