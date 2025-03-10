@@ -1,32 +1,38 @@
-// const jwt = require("jsonwebtoken");
-// const bcrypt = require("bcryptjs");
-// const loginRouter = require("express").Router();
-// const User = require("../models/user");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const loginRouter = require("express").Router();
+const User = require("../models/user"); // Asegúrate de que esta ruta sea correcta
 
-// loginRouter.post("/", async (request, response) => {
-//   const { username, password } = request.body;
+// Ruta para login
+loginRouter.post("/", async (request, response) => {
+  const { username, password } = request.body;
 
-//   const user = await User.findOne({ username });
-//   const passwordCorrect =
-//     user === null ? false : await bcrypt.compare(password, user.passwordHash);
+  // Buscar al usuario en la base de datos
+  const user = await User.findOne({ username });
 
-//   if (!(user && passwordCorrect)) {
-//     return response.status(401).json({
-//       error: "invalid username or password",
-//     });
-//   }
+  // Verificar la contraseña
+  const passwordCorrect =
+    user === null ? false : await bcrypt.compare(password, user.passwordHash);
 
-//   const userForToken = {
-//     username: user.username,
-//     id: user._id,
-//   };
+  if (!(user && passwordCorrect)) {
+    return response.status(401).json({
+      error: "invalid username or password",
+    });
+  }
 
-//   // Firmar el token con el secreto
-//   const token = jwt.sign(userForToken, process.env.SECRET, { expiresIn: "1h" });
+  // Crear el token con el id del usuario
+  const userForToken = {
+    username: user.username,
+    id: user._id,
+  };
 
-//   response
-//     .status(200)
-//     .send({ token, username: user.username, name: user.name });
-// });
+  // Firmar el token con la clave secreta
+  const token = jwt.sign(userForToken, process.env.SECRET, { expiresIn: "1h" });
 
-// module.exports = loginRouter;
+  // Devolver el token y el nombre del usuario
+  response
+    .status(200)
+    .send({ token, username: user.username, name: user.name });
+});
+
+module.exports = loginRouter;

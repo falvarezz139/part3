@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3001; // Si no tienes un valor en el .env, usa el puerto 3001 por defecto
 
 const MONGODB_URI =
   process.env.NODE_ENV === "test"

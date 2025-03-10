@@ -1,128 +1,70 @@
-const blogsRouter = require("express").Router();
+const express = require("express");
+const blogsRouter = express.Router(); // Aquí creas el Router
 const Blog = require("../models/blog");
 const User = require("../models/user");
+const jwt = require("jsonwebtoken"); // Importa jwt
 
-// Obtener todos los blogs con información del usuario creador
-blogsRouter.get("/", async (request, response, next) => {
+// Ahora puedes definir las rutas que utilizan blogsRouter
+
+// Ruta para obtener todos los blogs
+blogsRouter.get("/", async (request, response) => {
   try {
     const blogs = await Blog.find({}).populate("user", {
       username: 1,
       name: 1,
-    }); // Poblar la información del creador
+    });
     response.json(blogs);
   } catch (error) {
-    next(error);
+    response.status(500).json({ error: "Failed to fetch blogs" });
   }
 });
 
-// Obtener un blog por ID con información del usuario creador
-blogsRouter.get("/:id", async (request, response) => {
-  try {
-    const blog = await Blog.findById(request.params.id).populate("user", {
-      username: 1,
-      name: 1,
-    }); // Poblar la información del creador
-
-    if (blog) {
-      response.json(blog);
-    } else {
-      response.status(404).end();
-    }
-  } catch (error) {
-    response.status(400).json({ error: "Invalid ID format" });
-  }
-});
-
-// Crear un nuevo blog y asignar un usuario como creador
+// Ruta para crear un blog
 blogsRouter.post("/", async (request, response) => {
-  const { title, author, url, likes, userId } = request.body;
+  const token = getTokenFrom(request); // Obtener token del request
 
-  if (!title || !url) {
-    return response.status(400).json({
-      error: "title and url are required",
-    });
+  if (!token) {
+    return response.status(401).json({ error: "token missing" });
   }
 
   try {
-    let user;
-    if (userId) {
-      user = await User.findById(userId);
-      if (!user) {
-        return response.status(400).json({ error: "Invalid userId" });
-      }
-    } else {
-      user = await User.findOne(); // Seleccionar un usuario aleatorio si no se proporciona userId
-      if (!user) {
-        return response
-          .status(400)
-          .json({ error: "No users found in database" });
-      }
+    const decodedToken = jwt.verify(token, process.env.SECRET);
+
+    if (!decodedToken.id) {
+      return response.status(401).json({ error: "token invalid or expired" });
+    }
+
+    const user = await User.findById(decodedToken.id);
+
+    if (!user) {
+      return response.status(404).json({ error: "user not found" });
     }
 
     const blog = new Blog({
-      title,
-      author,
-      url,
-      likes: likes || 0,
-      user: user._id, // Asignar el creador del blog
+      title: request.body.title,
+      author: request.body.author,
+      url: request.body.url,
+      likes: request.body.likes || 0,
+      user: user._id,
     });
 
     const savedBlog = await blog.save();
-
-    // Asegurarse de que el blog se agregue al campo `blogs` del usuario
     user.blogs = user.blogs.concat(savedBlog._id);
     await user.save();
 
-    // Devolver el blog con la info del usuario populada
-    const populatedBlog = await Blog.findById(savedBlog._id).populate("user", {
-      username: 1,
-      name: 1,
-    });
-
-    response.status(201).json(populatedBlog);
+    response.status(201).json(savedBlog);
   } catch (error) {
-    response.status(400).json({ error: "Failed to save blog" });
+    response.status(500).json({ error: "internal server error" });
   }
 });
 
-// Eliminar un blog por ID
-blogsRouter.delete("/:id", async (request, response) => {
-  try {
-    const blog = await Blog.findByIdAndDelete(request.params.id);
-    if (blog) {
-      response.status(204).end();
-    } else {
-      response.status(404).json({ error: "Blog not found" });
-    }
-  } catch (error) {
-    response.status(400).json({ error: "Invalid ID format" });
+// Función para extraer el token del encabezado Authorization
+const getTokenFrom = (request) => {
+  const authorization = request.get("authorization");
+  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
+    return authorization.substring(7);
   }
-});
-
-// Actualizar los "me gusta" de un blog
-blogsRouter.put("/:id", async (request, response, next) => {
-  const { likes } = request.body;
-
-  if (likes === undefined || typeof likes !== "number") {
-    return response
-      .status(400)
-      .json({ error: "Likes value is required and must be a number" });
-  }
-
-  try {
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      request.params.id,
-      { likes },
-      { new: true }
-    ).populate("user", {
-      username: 1,
-      name: 1,
-    });
-
-    response.json(updatedBlog);
-  } catch (error) {
-    next(error);
-  }
-});
+  return null;
+};
 
 module.exports = blogsRouter;
