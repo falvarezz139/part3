@@ -2,7 +2,7 @@ const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
 const User = require("../models/user");
 
-// nos traemos todos los blogs del usuario
+// Obtener todos los blogs con información del usuario creador
 blogsRouter.get("/", async (request, response, next) => {
   try {
     const blogs = await Blog.find({}).populate("user", {
@@ -15,7 +15,7 @@ blogsRouter.get("/", async (request, response, next) => {
   }
 });
 
-// filtramos por ID con información del usuario
+// Obtener un blog por ID con información del usuario creador
 blogsRouter.get("/:id", async (request, response) => {
   try {
     const blog = await Blog.findById(request.params.id).populate("user", {
@@ -33,20 +33,30 @@ blogsRouter.get("/:id", async (request, response) => {
   }
 });
 
-// se crea un blog y se asocia con el usuario
+// Crear un nuevo blog y asignar un usuario como creador
 blogsRouter.post("/", async (request, response) => {
   const { title, author, url, likes, userId } = request.body;
 
-  if (!title || !url || !userId) {
+  if (!title || !url) {
     return response.status(400).json({
-      error: "title, url, and userId are required",
+      error: "title and url are required",
     });
   }
 
   try {
-    const user = await User.findById(userId); // filtramos al usuario por id
-    if (!user) {
-      return response.status(400).json({ error: "Invalid userId" });
+    let user;
+    if (userId) {
+      user = await User.findById(userId);
+      if (!user) {
+        return response.status(400).json({ error: "Invalid userId" });
+      }
+    } else {
+      user = await User.findOne(); // Seleccionar un usuario aleatorio si no se proporciona userId
+      if (!user) {
+        return response
+          .status(400)
+          .json({ error: "No users found in database" });
+      }
     }
 
     const blog = new Blog({
@@ -58,17 +68,22 @@ blogsRouter.post("/", async (request, response) => {
     });
 
     const savedBlog = await blog.save();
-
-    user.blogs = user.blogs.concat(savedBlog._id); // Agregamos el blog al array de blogs del usuario
+    user.blogs = user.blogs.concat(savedBlog._id);
     await user.save();
 
-    response.status(201).json(savedBlog);
+    // Devolver el blog con la info del usuario populada
+    const populatedBlog = await Blog.findById(savedBlog._id).populate("user", {
+      username: 1,
+      name: 1,
+    });
+
+    response.status(201).json(populatedBlog);
   } catch (error) {
     response.status(400).json({ error: "Failed to save blog" });
   }
 });
 
-// Eliminar blog por ID
+// Eliminar un blog por ID
 blogsRouter.delete("/:id", async (request, response) => {
   try {
     const blog = await Blog.findByIdAndDelete(request.params.id);
@@ -82,11 +97,10 @@ blogsRouter.delete("/:id", async (request, response) => {
   }
 });
 
-// Actualizar los megusta
+// Actualizar los "me gusta" de un blog
 blogsRouter.put("/:id", async (request, response, next) => {
   const { likes } = request.body;
 
-  // Verificar si los megustas estan definidos y son numeros
   if (likes === undefined || typeof likes !== "number") {
     return response
       .status(400)
@@ -98,7 +112,11 @@ blogsRouter.put("/:id", async (request, response, next) => {
       request.params.id,
       { likes },
       { new: true }
-    );
+    ).populate("user", {
+      username: 1,
+      name: 1,
+    });
+
     response.json(updatedBlog);
   } catch (error) {
     next(error);
