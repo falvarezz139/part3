@@ -8,7 +8,7 @@ blogsRouter.get("/", async (request, response, next) => {
     const blogs = await Blog.find({}).populate("user", {
       username: 1,
       name: 1,
-    });
+    }); // Poblar la información del creador
     response.json(blogs);
   } catch (error) {
     next(error);
@@ -21,7 +21,7 @@ blogsRouter.get("/:id", async (request, response) => {
     const blog = await Blog.findById(request.params.id).populate("user", {
       username: 1,
       name: 1,
-    });
+    }); // Poblar la información del creador
 
     if (blog) {
       response.json(blog);
@@ -64,10 +64,12 @@ blogsRouter.post("/", async (request, response) => {
       author,
       url,
       likes: likes || 0,
-      user: user.id,
+      user: user._id, // Asignar el creador del blog
     });
 
     const savedBlog = await blog.save();
+
+    // Asegurarse de que el blog se agregue al campo `blogs` del usuario
     user.blogs = user.blogs.concat(savedBlog._id);
     await user.save();
 
