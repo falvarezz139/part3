@@ -1,24 +1,26 @@
 const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
-const User = require("../models/user");  // Importamos el modelo de usuario
+const User = require("../models/user");
 
-// Obtener todos los blogs con información del usuario
+// nos traemos todos los blogs del usuario
 blogsRouter.get("/", async (request, response, next) => {
   try {
-    const blogs = await Blog.find({})
-      .populate("user", { username: 1, name: 1 });  // Poblar los datos del usuario
+    const blogs = await Blog.find({}).populate("user", {
+      username: 1,
+      name: 1,
+    });
     response.json(blogs);
   } catch (error) {
     next(error);
   }
 });
 
-// Obtener un blog por ID con información del usuario
+// filtramos por ID con información del usuario
 blogsRouter.get("/:id", async (request, response) => {
   try {
     const blog = await Blog.findById(request.params.id).populate("user", {
       username: 1,
-      name: 1
+      name: 1,
     });
 
     if (blog) {
@@ -31,18 +33,18 @@ blogsRouter.get("/:id", async (request, response) => {
   }
 });
 
-// Crear un nuevo blog y asociarlo con el usuario
+// se crea un blog y se asocia con el usuario
 blogsRouter.post("/", async (request, response) => {
   const { title, author, url, likes, userId } = request.body;
 
   if (!title || !url || !userId) {
     return response.status(400).json({
-      error: "title, url, and userId are required"
+      error: "title, url, and userId are required",
     });
   }
 
   try {
-    const user = await User.findById(userId);  // Buscar al usuario por su ID
+    const user = await User.findById(userId); // filtramos al usuario por id
     if (!user) {
       return response.status(400).json({ error: "Invalid userId" });
     }
@@ -52,12 +54,12 @@ blogsRouter.post("/", async (request, response) => {
       author,
       url,
       likes: likes || 0,
-      user: user.id  // Relacionamos el blog con el usuario
+      user: user.id,
     });
 
     const savedBlog = await blog.save();
-    
-    user.blogs = user.blogs.concat(savedBlog._id);  // Agregamos el blog al array de blogs del usuario
+
+    user.blogs = user.blogs.concat(savedBlog._id); // Agregamos el blog al array de blogs del usuario
     await user.save();
 
     response.status(201).json(savedBlog);
@@ -66,7 +68,7 @@ blogsRouter.post("/", async (request, response) => {
   }
 });
 
-// Eliminar un blog por ID
+// Eliminar blog por ID
 blogsRouter.delete("/:id", async (request, response) => {
   try {
     const blog = await Blog.findByIdAndDelete(request.params.id);
@@ -80,13 +82,15 @@ blogsRouter.delete("/:id", async (request, response) => {
   }
 });
 
-// Actualizar los "likes" de un blog
+// Actualizar los megusta
 blogsRouter.put("/:id", async (request, response, next) => {
   const { likes } = request.body;
 
-  // Verificar si likes está definido y es un número
-  if (likes === undefined || typeof likes !== 'number') {
-    return response.status(400).json({ error: "Likes value is required and must be a number" });
+  // Verificar si los megustas estan definidos y son numeros
+  if (likes === undefined || typeof likes !== "number") {
+    return response
+      .status(400)
+      .json({ error: "Likes value is required and must be a number" });
   }
 
   try {
