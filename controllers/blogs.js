@@ -64,4 +64,23 @@ blogsRouter.post("/", async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
+// Ruta para actualizar los likes de un blog específico
+blogsRouter.put("/:id", async (request, response) => {
+  const blogId = request.params.id; // Obtén el ID del blog desde los parámetros de la URL
+
+  // Buscar el blog en la base de datos
+  const blog = await Blog.findById(blogId);
+  if (!blog) {
+    return response.status(404).json({ error: "Blog no encontrado" });
+  }
+
+  // Actualizar el número de likes
+  blog.likes += 1; // Puedes modificar esto si deseas cambiar la lógica (sumar o cambiar el valor)
+
+  // Guardar el blog con los nuevos likes
+  const updatedBlog = await blog.save();
+
+  response.status(200).json(updatedBlog); // Devuelve el blog actualizado
+});
+
 module.exports = blogsRouter;
