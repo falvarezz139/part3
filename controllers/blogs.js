@@ -82,5 +82,37 @@ blogsRouter.put("/:id", async (request, response) => {
 
   response.status(200).json(updatedBlog); // Devuelve el blog actualizado
 });
+blogsRouter.delete("/:id", async (request, response) => {
+  const token = getTokenFrom(request);
+  if (!token) {
+    return response.status(401).json({ error: "token missing" });
+  }
+
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, process.env.SECRET);
+  } catch (error) {
+    return response.status(401).json({ error: "invalid token" });
+  }
+
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: "token invalid" });
+  }
+
+  const blog = await Blog.findById(request.params.id);
+  if (!blog) {
+    return response.status(404).json({ error: "Blog not found" });
+  }
+
+  // Verificar si el usuario que intenta borrar es el propietario
+  if (blog.user.toString() !== decodedToken.id) {
+    return response
+      .status(401)
+      .json({ error: "Unauthorized to delete this blog" });
+  }
+
+  await Blog.findByIdAndDelete(request.params.id);
+  response.status(204).end();
+});
 
 module.exports = blogsRouter;
